@@ -267,13 +267,13 @@ export class PostmanParamsGenerator {
     }
 
     const params: StoreParams = {
-      pubkey: this.isSessionId ? this.getPublicKeyMainnet() : this.getPublicKey(), // 05 prefix for Session ID, 00 for regular
+      pubkey: this.isSessionId ? `05${this.getX25519PublicKeyNoPrefix()}` : this.getPublicKey(), // 05 + X25519 for Session ID, 00 + Ed25519 for regular
       timestamp,
       ttl,
       data: encodedData,
       namespace,
       signature,
-      ...(this.isSessionId && { pubkey_ed25519: this.getX25519PublicKeyNoPrefix() }) // Only include if isSessionId is true
+      ...(this.isSessionId && { pubkey_ed25519: this.getPublicKeyNoPrefix() }) // Only include if isSessionId is true
     };
 
     return {
@@ -298,7 +298,7 @@ export class PostmanParamsGenerator {
     }
 
     const params: RetrieveParams = {
-      pubkey: this.isSessionId ? this.getPublicKeyMainnet() : this.getPublicKey(), // 05 prefix for Session ID, 00 for regular
+      pubkey: this.isSessionId ? `05${this.getX25519PublicKeyNoPrefix()}` : this.getPublicKey(), // 05 + X25519 for Session ID, 00 + Ed25519 for regular
       namespace,
       last_hash: lastHash,
       max_count: maxCount,
@@ -331,14 +331,14 @@ export class PostmanParamsGenerator {
     }
 
     const params: RetrieveParams = {
-      pubkey: this.isSessionId ? this.getPublicKeyMainnet() : this.getPublicKey(), // 05 prefix for Session ID, 00 for regular
+      pubkey: this.isSessionId ? `05${this.getX25519PublicKeyNoPrefix()}` : this.getPublicKey(), // 05 + X25519 for Session ID, 00 + Ed25519 for regular
       namespace,
       last_hash: lastHash,
       max_count: maxCount,
       max_size: maxSize,
       timestamp,
       signature,
-      ...(this.isSessionId && { pubkey_ed25519: this.getX25519PublicKeyNoPrefix() }) // Only include if isSessionId is true
+      ...(this.isSessionId && { pubkey_ed25519: this.getPublicKeyNoPrefix() }) // Only include if isSessionId is true
     };
 
     return {
@@ -352,7 +352,7 @@ export class PostmanParamsGenerator {
    * Based on official API: https://api.oxen.io/storage-rpc/#/storage
    */
   getDeleteParams(messages: string[] = ["test_hash_1", "test_hash_2"], required: boolean = true): ApiRequest<DeleteParams> {
-    const pubkey = this.isSessionId ? this.getPublicKeyMainnet() : this.getPublicKey();
+    const pubkey = this.isSessionId ? `05${this.getX25519PublicKeyNoPrefix()}` : this.getPublicKey();
     
     // Use the specific signDelete method from CryptoUtils
     const signature = this.crypto.signDelete(messages);
@@ -376,7 +376,7 @@ export class PostmanParamsGenerator {
    * Based on official API: https://api.oxen.io/storage-rpc/#/storage
    */
   getDeleteAllParams(namespace: number = 0): ApiRequest<DeleteAllParams> {
-    const pubkey = this.isSessionId ? this.getPublicKeyMainnet() : this.getPublicKey();
+    const pubkey = this.isSessionId ? `05${this.getX25519PublicKeyNoPrefix()}` : this.getPublicKey();
     const timestamp = Date.now();
     
     // Use the specific signDeleteAll method from CryptoUtils
@@ -401,7 +401,7 @@ export class PostmanParamsGenerator {
    * Based on official API: https://api.oxen.io/storage-rpc/#/storage
    */
   getUpdateParams(newData: string = "Updated data!", messageHash: string = "test_hash"): ApiRequest<UpdateParams> {
-    const pubkey = this.isSessionId ? this.getPublicKeyMainnet() : this.getPublicKey();
+    const pubkey = this.isSessionId ? `05${this.getX25519PublicKeyNoPrefix()}` : this.getPublicKey();
     const timestamp = Date.now();
     const encodedData = this.encodeData(newData);
     
@@ -446,7 +446,7 @@ export class PostmanParamsGenerator {
    * Based on official API: https://api.oxen.io/storage-rpc/#/storage
    */
   getMessagesParams(): ApiRequest<GetMessagesParams> {
-    const pubkey = this.isSessionId ? this.getPublicKeyMainnet() : this.getPublicKey();
+    const pubkey = this.isSessionId ? `05${this.getX25519PublicKeyNoPrefix()}` : this.getPublicKey();
     const timestamp = Date.now();
     
     // Signature format: ("get_messages" || timestamp)
@@ -470,7 +470,7 @@ export class PostmanParamsGenerator {
    * Based on official API: https://api.oxen.io/storage-rpc/#/storage
    */
   getExpiriesParams(messages: string[] = ["test_hash_1"]): ApiRequest<GetExpiriesParams> {
-    const pubkey = this.isSessionId ? this.getPublicKeyMainnet() : this.getPublicKey();
+    const pubkey = this.isSessionId ? `05${this.getX25519PublicKeyNoPrefix()}` : this.getPublicKey();
     const timestamp = Date.now();
     
     // Signature format: ("get_expiries" || timestamp || messages[0] || ... || messages[N])
@@ -497,7 +497,7 @@ export class PostmanParamsGenerator {
    * Updates (shortens) the expiry of all stored messages
    */
   getExpireAllParams(expiry: number = Date.now() + 86400000, namespace?: number | string): ApiRequest<ExpireAllParams> {
-    const pubkey = this.isSessionId ? this.getPublicKeyMainnet() : this.getPublicKey();
+    const pubkey = this.isSessionId ? `05${this.getX25519PublicKeyNoPrefix()}` : this.getPublicKey();
     
     // Use the specific signExpireAll method from CryptoUtils
     const signature = this.crypto.signExpireAll(namespace, expiry);
@@ -522,7 +522,7 @@ export class PostmanParamsGenerator {
    * Updates (shortens or extends) the expiry of one or more stored messages
    */
   getExpireMsgsParams(messages: string[] = ["test_hash_1"], expiry: number = Date.now() + 86400000, shorten?: boolean, extend?: boolean): ApiRequest<ExpireMsgsParams> {
-    const pubkey = this.isSessionId ? this.getPublicKeyMainnet() : this.getPublicKey();
+    const pubkey = this.isSessionId ? `05${this.getX25519PublicKeyNoPrefix()}` : this.getPublicKey();
     
     // Use the specific signExpireMsgs method from CryptoUtils
     const signature = this.crypto.signExpireMsgs(messages, expiry, shorten, extend);
@@ -550,7 +550,7 @@ export class PostmanParamsGenerator {
    */
   getRevokeSubaccountParams(subaccountToken: string): ApiRequest<RevokeSubaccountParams> {
     const timestamp = Date.now();
-    const pubkey = this.isSessionId ? this.getPublicKeyMainnet() : this.getPublicKey();
+    const pubkey = this.isSessionId ? `05${this.getX25519PublicKeyNoPrefix()}` : this.getPublicKey();
     
     // Owner signs: "revoke_subaccount" || subaccount_token
     const signature = this.crypto.signRevokeSubaccount(subaccountToken);

@@ -1,5 +1,5 @@
 import * as ed25519 from '@stablelib/ed25519';
-import * as x25519 from '@stablelib/x25519';
+import { convertPublicKeyToX25519 } from '@stablelib/ed25519';
 import * as random from '@stablelib/random';
 import * as hex from '@stablelib/hex';
 import * as base64 from '@stablelib/base64';
@@ -7,17 +7,14 @@ import * as bs58 from 'bs58';
 
 export class CryptoUtils {
   private ed25519KeyPair: ed25519.KeyPair;
-  private x25519KeyPair: x25519.KeyPair;
 
   constructor(seed?: Uint8Array) {
     if (seed) {
-      // Derive both Ed25519 and X25519 key pairs from the same seed
+      // Generate Ed25519 key pair from seed
       this.ed25519KeyPair = ed25519.generateKeyPairFromSeed(seed);
-      this.x25519KeyPair = x25519.generateKeyPairFromSeed(seed);
     } else {
-      // Generate random key pairs
+      // Generate random Ed25519 key pair
       this.ed25519KeyPair = ed25519.generateKeyPair();
-      this.x25519KeyPair = x25519.generateKeyPair();
     }
   }
 
@@ -29,10 +26,11 @@ export class CryptoUtils {
   }
 
   /**
-   * Get the X25519 public key as hex string
+   * Get the X25519 public key as hex string (derived from Ed25519)
    */
   getX25519PublicKeyHex(): string {
-    return hex.encode(this.x25519KeyPair.publicKey);
+    const x25519Pubkey = convertPublicKeyToX25519(this.ed25519KeyPair.publicKey);
+    return hex.encode(x25519Pubkey);
   }
 
   /**
@@ -50,13 +48,6 @@ export class CryptoUtils {
   }
 
   /**
-   * Get the X25519 secret key as hex string
-   */
-  getX25519SecretKeyHex(): string {
-    return hex.encode(this.x25519KeyPair.secretKey);
-  }
-
-  /**
    * Sign a message for store operation using Ed25519
    */
   signStore(namespace: number, sigTimestamp: number): string {
@@ -69,7 +60,8 @@ export class CryptoUtils {
    * Sign a message for retrieve operation using Ed25519
    */
   signRetrieve(namespace: number, timestamp: number): string {
-    const message = namespace === 0 ? `retrieve${timestamp}` : `retrieve${namespace}${timestamp}`;
+    const namespaceStr = namespace === 0 ? '' : namespace.toString();
+    const message = `retrieve${namespaceStr}${timestamp}`;
     const signature = ed25519.sign(this.ed25519KeyPair.secretKey, new TextEncoder().encode(message));
     return base64.encode(signature);
   }
@@ -151,7 +143,8 @@ export class CryptoUtils {
    * Sign retrieve operation using blinded subaccount keys
    */
   signRetrieveWithSubaccount(namespace: number, timestamp: number, blindedSecretKey: Uint8Array): string {
-    const message = namespace === 0 ? `retrieve${timestamp}` : `retrieve${namespace}${timestamp}`;
+    const namespaceStr = namespace === 0 ? '' : namespace.toString();
+    const message = `retrieve${namespaceStr}${timestamp}`;
     return this.signWithBlindedSubaccount(message, blindedSecretKey);
   }
 
@@ -291,8 +284,6 @@ export class CryptoUtils {
   static fromEd25519KeyPair(publicKey: Uint8Array, secretKey: Uint8Array): CryptoUtils {
     const instance = new CryptoUtils();
     instance.ed25519KeyPair = { publicKey, secretKey };
-    // Derive X25519 key pair from Ed25519 secret key
-    instance.x25519KeyPair = x25519.generateKeyPairFromSeed(secretKey.slice(0, 32));
     return instance;
   }
 
@@ -301,7 +292,6 @@ export class CryptoUtils {
    */
   static fromX25519KeyPair(publicKey: Uint8Array, secretKey: Uint8Array): CryptoUtils {
     const instance = new CryptoUtils();
-    instance.x25519KeyPair = { publicKey, secretKey };
     // Derive Ed25519 key pair from X25519 secret key
     instance.ed25519KeyPair = ed25519.generateKeyPairFromSeed(secretKey);
     return instance;
@@ -322,10 +312,10 @@ export class CryptoUtils {
   }
 
   /**
-   * Get X25519 key pair
+   * Get X25519 public key (derived from Ed25519)
    */
-  getX25519KeyPair(): x25519.KeyPair {
-    return this.x25519KeyPair;
+  getX25519PublicKey(): Uint8Array {
+    return convertPublicKeyToX25519(this.ed25519KeyPair.publicKey);
   }
 
   /**

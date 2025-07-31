@@ -14,6 +14,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@noble/curves": "^1.9.6",
     "@stablelib/base64": "^2.0.1",
     "@stablelib/ed25519": "^2.0.2",
     "@stablelib/hex": "^2.0.1",
