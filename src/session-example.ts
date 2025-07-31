@@ -21,7 +21,7 @@ console.log('');
 
 // Test Store Parameters
 console.log('📦 Store Parameters (Session ID Mode):');
-const sessionStoreParams = sessionGenerator.getStoreParams("Hello from Session ID Mode!", 86400000, 0);
+const sessionStoreParams = sessionGenerator.getStoreParams("Hello from Session ID Mode!" + Date.now(), 86400000, 0);
 console.log(convertToJSON(sessionStoreParams));
 
 // Test Retrieve Parameters
