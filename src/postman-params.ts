@@ -227,22 +227,19 @@ export class PostmanParamsGenerator {
     
     // For all namespaces except -10, signature is required
     let signature: string | undefined;
-    let sig_timestamp: number | undefined;
     
     if (namespace !== -10) {
       // Use the specific signStore method from CryptoUtils
       signature = this.crypto.signStore(namespace, timestamp);
-      sig_timestamp = timestamp;
     }
 
     const params: StoreParams = {
-      pubkey: this.isSessionId ? this.getPublicKeyMainnet() : this.getPublicKey(), // 05 prefix for Session ID, 00 for regular
+      pubkey: this.isSessionId ? `05${this.getX25519PublicKeyNoPrefix()}` : this.getPublicKey(), // 05 + X25519 for Session ID, 00 + Ed25519 for regular
       timestamp,
       ttl,
       data: encodedData,
       namespace,
       signature,
-      sig_timestamp,
       ...(this.isSessionId && { pubkey_ed25519: this.getPublicKeyNoPrefix() }) // Only include if isSessionId is true
     };
 
@@ -263,12 +260,10 @@ export class PostmanParamsGenerator {
     
     // For all namespaces except -10, signature is required
     let signature: string | undefined;
-    let sig_timestamp: number | undefined;
     
     if (namespace !== -10) {
       // Use X25519 signature method
       signature = this.crypto.signStore(namespace, timestamp);
-      sig_timestamp = timestamp;
     }
 
     const params: StoreParams = {
@@ -278,7 +273,6 @@ export class PostmanParamsGenerator {
       data: encodedData,
       namespace,
       signature,
-      sig_timestamp,
       ...(this.isSessionId && { pubkey_ed25519: this.getX25519PublicKeyNoPrefix() }) // Only include if isSessionId is true
     };
 
@@ -610,12 +604,10 @@ export class PostmanParamsGenerator {
     
     // For all namespaces except -10, signature is required
     let signature: string | undefined;
-    let sig_timestamp: number | undefined;
     
     if (namespace !== -10) {
       // Use the subaccount's Ed25519 key to sign the request
       signature = subaccountCrypto.signStore(namespace, timestamp);
-      sig_timestamp = timestamp;
     }
 
     const params: StoreParams = {
@@ -625,7 +617,6 @@ export class PostmanParamsGenerator {
       data: encodedData,
       namespace,
       signature,
-      sig_timestamp,
       subaccount: subaccountToken,
       subaccount_sig: subaccountSignature
     };

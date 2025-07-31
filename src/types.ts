@@ -18,7 +18,7 @@ export interface StoreParams {
   data: string;
   namespace?: number;
   signature?: string;
-  sig_timestamp?: number;
+
   pubkey_ed25519?: string;
   subaccount?: string;
   subaccount_sig?: string;

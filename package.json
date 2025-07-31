@@ -8,6 +8,7 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "owner": "ts-node src/owner-example.ts",
+    "session": "ts-node src/session-example.ts",
     "subaccount": "ts-node src/subaccount-example.ts",
     "test": "jest",
     "test:watch": "jest --watch"
