@@ -3,14 +3,8 @@ import * as ed25519 from '@stablelib/ed25519';
 import { mnemonicToSeedSync, generateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
 
-import { CryptoUtils } from './crypto';
 import { convertPublicKeyToX25519 } from '@stablelib/ed25519';
 
-/**
- * Convert a 13-word Monero-style seed phrase to a 32-byte seed using Session.js mnemonic
- * @param seedPhrase Space-separated 13 words
- * @returns 32-byte seed
- */
 function seedPhraseToBytes(seedPhrase: string): Uint8Array {
     // Use Session.js mnemonic decode function
     const seedHex = decode(seedPhrase);
