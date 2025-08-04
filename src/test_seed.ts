@@ -36,7 +36,6 @@ function seedPhraseToBytes(seedPhrase: string): Uint8Array {
  */
 function seedToSessionId(seed: Uint8Array): string {
     // Create CryptoUtils instance from seed
-    const cryptoUtils = CryptoUtils.fromSeed(seed);
     const ed25519KeyPair = ed25519.generateKeyPairFromSeed(seed);
     
     // Get X25519 public key (which is what Session IDs use)
