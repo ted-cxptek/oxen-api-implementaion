@@ -28,7 +28,7 @@ console.log(convertToJSON(getSwarmParams));
 
 console.log('\n=== Regular Examples (isSessionId=false) ===');
 console.log('Session ID Mode:', generator.getSessionIdMode());
-const getStoreParams = generator.getStoreParams("Hello World!!! " + Date.now(), 86400000, 0);
+const getStoreParams = generator.getStoreParams("Hello World!!! " + Date.now(), 86400000, 3);
 console.log(convertToJSON(getStoreParams));
 
 const hash = "m4z+WvLvlieg97cMoq4r9ABrBAKA14YWdEXdnp/ubtU";

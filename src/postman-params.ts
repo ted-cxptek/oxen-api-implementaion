@@ -215,7 +215,11 @@ export class PostmanParamsGenerator {
    * Generate store parameters for Postman
    * Based on official API: https://api.oxen.io/storage-rpc/#/storage
    */
-  getStoreParams(data: string = "Hello World!", ttl: number = 86400000, namespace: number = 0): ApiRequest<StoreParams> {
+  getStoreParams(
+    data: string = "Hello World!", 
+    ttl: number = 86400000, 
+    namespace: number = 0
+  ): ApiRequest<StoreParams> {
     const timestamp = Date.now();
     const encodedData = this.encodeData(data);
     
@@ -224,6 +228,7 @@ export class PostmanParamsGenerator {
     
     if (namespace !== -10) {
       // Use the specific signStore method from CryptoUtils
+      // Signature format: ("store" || namespace || timestamp)
       signature = this.crypto.signStore(namespace, timestamp);
     }
 
@@ -234,39 +239,7 @@ export class PostmanParamsGenerator {
       data: encodedData,
       namespace,
       signature,
-      ...(this.isSessionId && { pubkey_ed25519: this.getPublicKeyNoPrefix() }) // Only include if isSessionId is true
-    };
-
-    return {
-      method: 'store',
-      params
-    };
-  }
-
-  /**
-   * Generate store parameters for Postman using X25519 keys
-   * Based on official API: https://api.oxen.io/storage-rpc/#/storage
-   * When pubkey_ed25519 is X25519, the signature should be generated using X25519
-   */
-  getStoreParamsX25519(data: string = "Hello World!", ttl: number = 86400000, namespace: number = 0): ApiRequest<StoreParams> {
-    const timestamp = Date.now();
-    const encodedData = this.encodeData(data);
-    
-    // For all namespaces except -10, signature is required
-    let signature: string | undefined;
-    
-    if (namespace !== -10) {
-      // Use X25519 signature method
-      signature = this.crypto.signStore(namespace, timestamp);
-    }
-
-    const params: StoreParams = {
-      pubkey: this.isSessionId ? this.getX25519SessionId() : this.getPublicKey(), // 05 + X25519 for Session ID, 00 + Ed25519 for regular
-      timestamp,
-      ttl,
-      data: encodedData,
-      namespace,
-      signature,
+      sig_timestamp: timestamp, // Use the same timestamp for signature
       ...(this.isSessionId && { pubkey_ed25519: this.getPublicKeyNoPrefix() }) // Only include if isSessionId is true
     };
 
@@ -592,7 +565,14 @@ export class PostmanParamsGenerator {
   /**
    * Generate store parameters with subaccount authentication
    */
-  getStoreParamsWithSubaccount(data: string, ttl: number, namespace: number, subaccountToken: string, subaccountSignature: string, subaccountCrypto: CryptoUtils): ApiRequest<StoreParams> {
+  getStoreParamsWithSubaccount(
+    data: string, 
+    ttl: number, 
+    namespace: number, 
+    subaccountToken: string, 
+    subaccountSignature: string, 
+    subaccountCrypto: CryptoUtils
+  ): ApiRequest<StoreParams> {
     const timestamp = Date.now();
     const encodedData = this.encodeData(data);
     
@@ -611,6 +591,7 @@ export class PostmanParamsGenerator {
       data: encodedData,
       namespace,
       signature,
+      sig_timestamp: timestamp, // Use the same timestamp for signature
       subaccount: subaccountToken,
       subaccount_sig: subaccountSignature
     };
