@@ -93,4 +93,38 @@ export interface TestConfig {
   testPubkey: string;
   testNamespace: number;
   timeout: number;
+}
+
+// Push Notification Types
+export interface PushSubscribeParams {
+  pubkey: string;
+  session_ed25519?: string;
+  subaccount?: string;
+  subaccount_sig?: string;
+  namespaces: number[];
+  data: boolean;
+  sig_ts: number;
+  signature: string;
+  service: string;
+  service_info: {
+    endpoint?: string;
+    auth?: string;
+    p256dh?: string;
+    [key: string]: any;
+  };
+  enc_key: string;
+}
+
+export interface PushUnsubscribeParams {
+  pubkey: string;
+  session_ed25519: string;
+  subaccount?: string;
+  subaccount_sig?: string;
+  sig_ts: number;
+  signature: string;
+}
+
+export interface PushNotificationRequest<T = any> {
+  method: string;
+  params: T;
 } 

@@ -8,7 +8,10 @@ import {
   UpdateParams,
   SwarmParams,
   OxendRequestParams,
-  TestConfig
+  TestConfig,
+  PushSubscribeParams,
+  PushUnsubscribeParams,
+  PushNotificationRequest
 } from './types';
 
 // Define the response type for all parameter functions
@@ -838,6 +841,65 @@ export class PostmanParamsGenerator {
   }
 
   /**
+   * Generate push notification subscribe parameters for Postman
+   * Based on Session push notification server API
+   */
+  getPushSubscribeParams(
+    namespaces: number[] = [-400, 0, 1, 2, 17],
+    data: boolean = true,
+    service: string = "apns",
+    serviceInfo: any = {
+      token: "1234567890123456789012345678901234567890123456789012345678901234"
+    },
+    subaccountToken?: string,
+    subaccountSignature?: string
+  ): PushSubscribeParams {
+    const sigTs = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
+    
+    // For Session ID mode: pubkey is the Session ID (05 + X25519), session_ed25519 is the Ed25519
+    // For regular mode: pubkey is the regular pubkey (00 + Ed25519), no session_ed25519
+    let pubkey: string;
+    let sessionEd25519: string | undefined;
+    
+    if (this.isSessionId) {
+      // Session ID mode: pubkey = 05 + X25519, session_ed25519 = Ed25519
+      pubkey = `05${this.getX25519PublicKeyNoPrefix()}`;
+      sessionEd25519 = this.getPublicKeyNoPrefix();
+    } else {
+      // Regular mode: pubkey = 00 + Ed25519, no session_ed25519
+      pubkey = this.getPublicKey(); // This is already 00 + Ed25519
+      sessionEd25519 = undefined; // Not provided for regular mode
+    }
+    
+    // Generate a random 32-byte encryption key
+    const encKeyBytes = CryptoUtils.generateRandomBytes(32);
+    const encKey = hex.encode(encKeyBytes);
+    
+    // Use the specific signPushSubscribe method from CryptoUtils
+    // The signature should be over the raw 33-byte pubkey (the pubkey field)
+    const pubkeyBytes = hex.decode(pubkey);
+    const signature = this.crypto.signPushSubscribe(sigTs, namespaces, data, pubkeyBytes);
+
+    const params: PushSubscribeParams = {
+      pubkey,
+      namespaces,
+      data,
+      sig_ts: sigTs,
+      signature,
+      service,
+      service_info: serviceInfo,
+      enc_key: encKey,
+      ...(sessionEd25519 && { session_ed25519: sessionEd25519 }),
+      ...(subaccountToken && { subaccount: subaccountToken }),
+      ...(subaccountSignature && { subaccount_sig: subaccountSignature })
+    };
+
+    return params;
+  }
+
+
+
+  /**
    * Generate complete request body for any method
    */
   generateRequestBody(method: string, customParams?: any): any {
@@ -865,6 +927,9 @@ export class PostmanParamsGenerator {
       case 'get_stats':
         params = this.getStatsParams();
         break;
+      case 'push_subscribe':
+        params = this.getPushSubscribeParams();
+        break;
       default:
         params = customParams || {};
     }
@@ -886,7 +951,8 @@ export class PostmanParamsGenerator {
       'get_messages', 'get_expiries', 'get_stats', 'get_bstats', 
       'get_version', 'oxend_request', 'test', 'test_retrieve', 
       'test_delete', 'test_update', 'test_expire', 'test_expire2', 
-      'test_expire3', 'test_expire4', 'test_expire5', 'test_expire6'
+      'test_expire3', 'test_expire4', 'test_expire5', 'test_expire6',
+      'push_subscribe'
     ];
 
     methods.forEach(method => {

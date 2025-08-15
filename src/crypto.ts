@@ -62,6 +62,7 @@ export class CryptoUtils {
   signRetrieve(namespace: number, timestamp: number): string {
     const namespaceStr = namespace === 0 ? '' : namespace.toString();
     const message = `retrieve${namespaceStr}${timestamp}`;
+    
     const signature = ed25519.sign(this.ed25519KeyPair.secretKey, new TextEncoder().encode(message));
     return base64.encode(signature);
   }
@@ -238,6 +239,21 @@ export class CryptoUtils {
   signSubaccountToken(subaccountToken: string): string {
     const tokenBytes = hex.decode(subaccountToken);
     const signature = ed25519.sign(this.ed25519KeyPair.secretKey, tokenBytes);
+    return base64.encode(signature);
+  }
+
+  /**
+   * Sign a push notification subscribe message using Ed25519
+   * Based on Session push notification server API
+   * Signature format: ("MONITOR" || HEX(ACCOUNT) || SIG_TS || DATA01 || NS[0] || "," || ... || "," || NS[n])
+   * Where ACCOUNT is the raw 33-byte pubkey converted to hex
+   */
+  signPushSubscribe(sigTs: number, namespaces: number[], data: boolean, accountBytes: Uint8Array): string {
+    const dataStr = data ? '1' : '0';
+    const namespacesStr = namespaces.join(',');
+    const accountHex = hex.encode(accountBytes);
+    const message = `MONITOR${accountHex.toLowerCase()}${sigTs}${dataStr}${namespacesStr}`;
+    const signature = ed25519.sign(this.ed25519KeyPair.secretKey, new TextEncoder().encode(message));
     return base64.encode(signature);
   }
 
