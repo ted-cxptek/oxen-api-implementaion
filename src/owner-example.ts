@@ -19,11 +19,8 @@ console.log('=== Oxen Storage API Postman Parameters ===\n');
 
 // Show public key options
 console.log('Public Key Options:');
-console.log('Default (00 prefix, 66 chars):', generator.getPublicKey());
-console.log('Testnet/Localdev (00 prefix, 66 chars):', generator.getPublicKeyTestnet());
-console.log('Mainnet (05 prefix, 66 chars):', generator.getPublicKeyMainnet());
-console.log('Raw Ed25519 (no prefix, 64 chars):', generator.getPublicKeyNoPrefix());
-console.log('Raw X25519 (no prefix, 64 chars):', generator.getX25519PublicKeyNoPrefix());
+console.log('Ed25519 (00 prefix, 66 chars):', generator.getPublicKey());
+console.log('Session X25519 (05 prefix, 66 chars):', generator.getX25519SessionId());
 console.log('\n' + '='.repeat(50) + '\n');
 
 const getSwarmParams = generator.getSwarmParams();

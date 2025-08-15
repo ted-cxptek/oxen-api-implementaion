@@ -2,191 +2,113 @@
 
 A TypeScript library for interacting with the Oxen Storage API, providing easy-to-use methods for generating API request parameters and handling cryptographic operations.
 
-## Features
-
-- ✅ **Complete API Support**: All Oxen Storage API endpoints
-- ✅ **Cryptographic Operations**: Ed25519/X25519 signing with stablelib
-- ✅ **Subaccount Support**: Delegated access with permission-based authentication
-- 🔄 **Session ID Support**: Support for both regular and Session ID pubkey formats (coming soon)
-- ✅ **Type Safety**: Full TypeScript support with proper interfaces
-- ✅ **Postman Integration**: Generate request parameters for Postman testing
-
-## Installation
+## 🚀 Quick Start
 
 ```bash
+# Install dependencies
 npm install
+
+# Build the project
 npm run build
+
+# Run examples
+npm run owner
+npm run session
+npm run subaccount
 ```
 
-## Quick Start
+## 📚 Example Files Usage
 
-### Basic Usage
+This library provides three comprehensive example files that demonstrate different use cases:
 
+### 1. 🔑 Owner Example (`owner-example.ts`)
+
+**Purpose**: Demonstrates basic storage operations for regular Ed25519 accounts.
+
+**What it shows**:
+- Generating different public key formats
+- Basic store/retrieve operations
+- Message deletion and expiry management
+- Swarm information retrieval
+
+**Key Features**:
 ```typescript
-import { PostmanParamsGenerator } from './src/postman-params';
-import { CryptoUtils } from './src/crypto';
+// Generate different public key formats
+console.log('Default (00 prefix):', generator.getPublicKey());
+console.log('Raw Ed25519:', generator.getPublicKeyNoPrefix());
+console.log('Raw X25519:', generator.getX25519PublicKeyNoPrefix());
 
-// Create a generator with a seed (optional)
-const seed = Buffer.from("610987A8DFB79BCFE635A14CFA1F22D9D4BF2A28A9A707D19CF2FFC03AA59F16", "hex");
-const generator = new PostmanParamsGenerator(seed);
-
-// Generate store parameters
+// Basic storage operations
 const storeParams = generator.getStoreParams("Hello World!", 86400000, 0);
-console.log(JSON.stringify(storeParams, null, 2));
-
-// Generate retrieve parameters
-const retrieveParams = generator.getRetrieveParams(undefined, 0, 100, -5);
-console.log(JSON.stringify(retrieveParams, null, 2));
+const retrieveParams = generator.getRetrieveParams(hash, 0, 100, -5);
+const deleteParams = generator.getDeleteParams(["message_hash"]);
 ```
 
-### Public Key Formats
-
-The library supports multiple public key formats:
-
-```typescript
-// Default (00 prefix, 66 chars) - for testnet/localdev
-console.log(generator.getPublicKey());
-// Output: 0074C72203AAD9E2B67CA7331162FE293D492AFADB5CEECF83FB56B015ED575B75
-
-// Mainnet (05 prefix, 66 chars) - for Session ID
-console.log(generator.getPublicKeyMainnet());
-// Output: 0574C72203AAD9E2B67CA7331162FE293D492AFADB5CEECF83FB56B015ED575B75
-
-// Raw Ed25519 (64 chars) - for pubkey_ed25519 field
-console.log(generator.getPublicKeyNoPrefix());
-// Output: 74C72203AAD9E2B67CA7331162FE293D492AFADB5CEECF83FB56B015ED575B75
-
-// Raw X25519 (64 chars) - for X25519 operations
-console.log(generator.getX25519PublicKeyNoPrefix());
-// Output: 1D87974E1637F380987943E8C13E0C63FFC2882A1F1A299A2658C9D970DE6179
+**Run it**:
+```bash
+npm run owner
 ```
 
-### Session ID Mode (Coming Soon)
+### 2. 🆔 Session Example (`session-example.ts`)
 
-Toggle between regular and Session ID modes:
+**Purpose**: Demonstrates Session ID mode operations with X25519 keys and Ed25519 signatures.
 
+**What it shows**:
+- Session ID mode activation (05 prefix)
+- X25519 public key usage with Ed25519 signatures
+- Push notification subscription
+- Session-specific cryptographic operations
+
+**Key Features**:
 ```typescript
-// Regular mode (default)
-generator.setSessionIdMode(false);
-const regularParams = generator.getStoreParams("Hello World!");
-// pubkey: 0074C72203AAD9E2B67CA7331162FE293D492AFADB5CEECF83FB56B015ED575B75
-// pubkey_ed25519: not included
+// Create Session ID mode generator
+const sessionGenerator = new PostmanParamsGenerator(seed, true);
 
-// Session ID mode (coming soon)
-generator.setSessionIdMode(true);
-const sessionParams = generator.getStoreParams("Hello World!");
-// pubkey: 0574C72203AAD9E2B67CA7331162FE293D492AFADB5CEECF83FB56B015ED575B75
-// pubkey_ed25519: 74C72203AAD9E2B67CA7331162FE293D492AFADB5CEECF83FB56B015ED575B75
-```
+// Session ID operations
+const sessionStoreParams = sessionGenerator.getStoreParams("Hello from Session ID!", 86400000, 0);
+const sessionRetrieveParams = sessionGenerator.getRetrieveParams(hash, 0, 100, -5);
 
-## API Methods
-
-### Core Storage Operations
-
-#### Store
-```typescript
-const storeParams = generator.getStoreParams(
-    "Hello World!",    // data
-    86400000,          // ttl (24 hours)
-    0                  // namespace
+// Push notification subscription
+const pushSubscribeParams = sessionGenerator.getPushSubscribeParams(
+  [-400, 0, 1, 2, 17], // namespaces
+  true,                  // data
+  "apns",               // service
+  { token: "..." }      // service_info
 );
 ```
 
-#### Retrieve
-```typescript
-const retrieveParams = generator.getRetrieveParams(
-    "last_hash_here",  // last_hash (optional)
-    0,                 // namespace
-    100,               // max_count
-    -5                 // max_size
-);
+**Run it**:
+```bash
+npm run session
 ```
 
-#### Delete
+### 3. 👥 Subaccount Example (`subaccount-example.ts`)
+
+**Purpose**: Demonstrates complete subaccount delegation and usage workflow.
+
+**What it shows**:
+- Complete subaccount creation process
+- Permission-based access control
+- Subaccount token generation and verification
+- API operations using subaccount authentication
+
+**Key Features**:
 ```typescript
-const deleteParams = generator.getDeleteParams(
-    ["hash1", "hash2"], // messages
-    true                // required
-);
-```
+// Step 1: Account Owner Setup
+const accountOwner = new PostmanParamsGenerator(accountOwnerSeed);
 
-#### Delete All
-```typescript
-const deleteAllParams = generator.getDeleteAllParams(0); // namespace
-```
+// Step 2: Subaccount User Setup
+const subaccountUser = PostmanParamsGenerator.createSubaccountUser(subaccountUserSeed);
 
-#### Update
-```typescript
-const updateParams = generator.getUpdateParams(
-    "Updated data!",   // new data
-    "message_hash"     // message hash
-);
-```
-
-### Expiry Management
-
-#### Get Expiries
-```typescript
-const expiriesParams = generator.getExpiriesParams([
-    "hash1", "hash2"
-]);
-```
-
-#### Expire All
-```typescript
-const expireAllParams = generator.getExpireAllParams(
-    Date.now() + 3600000, // expiry timestamp
-    0                     // namespace
-);
-```
-
-#### Expire Messages
-```typescript
-const expireMsgsParams = generator.getExpireMsgsParams(
-    ["hash1", "hash2"],   // messages
-    Date.now() + 7200000, // expiry timestamp
-    false,                // shorten
-    true                  // extend
-);
-```
-
-### Utility Operations
-
-#### Get Swarm
-```typescript
-const swarmParams = generator.getSwarmParams();
-```
-
-#### Get Version
-```typescript
-const versionParams = generator.getVersionParams();
-```
-
-## Subaccount Support
-
-### Creating Subaccount Delegation
-
-```typescript
-// Account owner creates subaccount delegation
-const targetUserPubkey = "2FE86F0D8587DE9604853185DF2E18350BAECF95360B2CB0493CFCE5C6A8AB55";
-const delegation = generator.generateSubaccountDelegation(
-    targetUserPubkey,  // Target user's Ed25519 pubkey
-    1,                 // Read permission
-    0                  // Testnet prefix
+// Step 3: Create Subaccount Delegation
+const delegation = accountOwner.generateSubaccountDelegation(
+    targetUserPubkeyHex,  // Target user's Ed25519 pubkey
+    4,                    // Read permission only
+    0                     // Testnet prefix
 );
 
-console.log('Subaccount Token:', delegation.subaccountToken);
-console.log('Subaccount Signature:', delegation.subaccountSignature);
-```
-
-### Using Subaccount Authentication
-
-```typescript
-// Subaccount user creates their own CryptoUtils instance
-const subaccountUser = PostmanParamsGenerator.createSubaccountUser();
-
-// Use subaccount for API requests
-const retrieveWithSubaccount = generator.getRetrieveParamsWithSubaccount(
+// Step 4: Use Subaccount for API Requests
+const retrieveRequest = accountOwner.getRetrieveParamsWithSubaccount(
     undefined,                    // last_hash
     0,                           // namespace
     100,                         // max_count
@@ -197,163 +119,119 @@ const retrieveWithSubaccount = generator.getRetrieveParamsWithSubaccount(
 );
 ```
 
+**Run it**:
+```bash
+npm run subaccount
+```
+
+## 🛠️ Installation & Setup
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd script-ts
+
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+```
+
+## 📖 Understanding the Examples
+
+### Public Key Formats
+
+The library supports multiple public key formats for different use cases:
+
+| Format | Prefix | Length | Use Case |
+|--------|--------|--------|----------|
+| Default | `00` | 66 chars | Testnet/localdev operations |
+| Raw Ed25519 | None | 64 chars | `pubkey_ed25519` field |
+| Raw X25519 | None | 64 chars | Raw X25519 operations |
+| Session ID | `05` | 66 chars | Session ID operations |
+
+### Namespace Usage
+
+Namespaces organize conversations and have different authentication requirements:
+
+- **Namespace 0**: Public messages (DMs) - unauthenticated submission allowed
+- **Namespaces 2-5**: Session config data (profile, contacts, conversations, groups)
+- **Namespace 10**: Legacy closed groups
+- **Other namespaces**: Require authentication for all operations
+
 ### Subaccount Permissions
+
+Subaccounts support granular permission control:
 
 | Value | Permissions | Description |
 |-------|-------------|-------------|
-| `01` | Read only | Can retrieve messages and view expiries |
-| `02` | Write only | Can store messages and extend expiries |
-| `03` | Read + Write | Can read and write, but not delete |
-| `04` | Delete only | Can delete messages and shorten expiries |
+| `01` | Read only | Retrieve messages and view expiries |
+| `02` | Write only | Store messages and extend expiries |
+| `03` | Read + Write | Read and write, but not delete |
+| `04` | Delete only | Delete messages and shorten expiries |
 | `07` | Read + Write + Delete | Full access |
 | `0F` | Read + Write + Delete + AnyPrefix | Full access across all prefixes |
 
-### Revoking Subaccounts
+## 🔧 Customization
+
+### Using Your Own Seeds
 
 ```typescript
-const revokeParams = generator.getRevokeSubaccountParams(delegation.subaccountToken);
+// Use a specific seed for consistent testing
+const seedHex = "your_32_byte_hex_seed_here";
+const seed = Buffer.from(seedHex, "hex");
+const generator = new PostmanParamsGenerator(seed);
+
+// Or generate a random seed
+const randomSeed = CryptoUtils.generateRandomBytes(32);
+const randomGenerator = new PostmanParamsGenerator(randomSeed);
 ```
 
-## Cryptographic Operations
+### Modifying Example Parameters
 
-### Direct CryptoUtils Usage
+Each example file can be customized:
 
 ```typescript
-import { CryptoUtils } from './src/crypto';
-
-// Create from seed
-const crypto = new CryptoUtils(seed);
-
-// Generate random key pair
-const randomCrypto = CryptoUtils.generateKeyPair();
-
-// Create from existing key pair
-const fromKeyPair = CryptoUtils.fromEd25519KeyPair(publicKey, secretKey);
-
-// Sign messages
-const signature = crypto.signMessage("Hello World!");
-
-// Generate signatures for specific operations
-const storeSignature = crypto.signStore(0, Date.now());
-const retrieveSignature = crypto.signRetrieve(0, Date.now());
-const deleteSignature = crypto.signDelete(["hash1", "hash2"]);
+// In owner-example.ts, modify these values:
+const seedHex = "your_seed_here";
+const messageData = "Your custom message";
+const ttl = 86400000; // 24 hours in milliseconds
+const namespace = 0;   // Your preferred namespace
 ```
 
-### Utility Functions
+## 🧪 Testing with Postman
 
-```typescript
-// Hex encoding/decoding
-const bytes = CryptoUtils.hexToBytes("deadbeef");
-const hex = CryptoUtils.bytesToHex(bytes);
+All examples generate Postman-ready request parameters. Copy the JSON output and use it in Postman:
 
-// Base64 encoding/decoding
-const base64 = CryptoUtils.stringToBase64("Hello World!");
-const string = CryptoUtils.base64ToString(base64);
+1. **Run an example** (e.g., `npm run owner`)
+2. **Copy the JSON output** for the operation you want to test
+3. **Paste into Postman** request body
+4. **Set the endpoint** to your OXEN storage server
+5. **Send the request**
 
-// Generate random bytes
-const randomBytes = CryptoUtils.generateRandomBytes(32);
-```
+## 📚 API Reference
 
-## Running Examples
+For detailed API documentation, see [OXEN_STORAGE_API_DOCS.md](./OXEN_STORAGE_API_DOCS.md).
 
-### Basic Demo
-```bash
-npm run build
-node dist/postman-demo.js
-```
-
-### Subaccount Demo
-```bash
-npm run build
-node dist/subaccount-example.js
-```
-
-## API Reference
-
-### PostmanParamsGenerator
-
-#### Constructor
-```typescript
-constructor(seed?: Uint8Array, isSessionId: boolean = false)
-```
-
-#### Public Key Methods
-- `getPublicKey()`: Default (00 prefix, 66 chars)
-- `getPublicKeyTestnet()`: Testnet/localdev (00 prefix, 66 chars)
-- `getPublicKeyMainnet()`: Mainnet (05 prefix, 66 chars)
-- `getPublicKeyNoPrefix()`: Raw Ed25519 (64 chars)
-- `getX25519PublicKeyNoPrefix()`: Raw X25519 (64 chars)
-
-#### Session ID Methods (Coming Soon)
-- `setSessionIdMode(isSessionId: boolean)`: Set Session ID mode
-- `getSessionIdMode()`: Get current Session ID mode
-
-#### API Parameter Methods
-- `getStoreParams(data, ttl, namespace)`: Generate store parameters
-- `getRetrieveParams(lastHash, namespace, maxCount, maxSize)`: Generate retrieve parameters
-- `getDeleteParams(messages, required)`: Generate delete parameters
-- `getDeleteAllParams(namespace)`: Generate delete_all parameters
-- `getExpiriesParams(messages)`: Generate get_expiries parameters
-- `getExpireAllParams(expiry, namespace)`: Generate expire_all parameters
-- `getExpireMsgsParams(messages, expiry, shorten, extend)`: Generate expire_msgs parameters
-
-#### Subaccount Methods
-- `generateSubaccountDelegation(targetPubkey, permissions, networkPrefix)`: Create subaccount delegation
-- `getStoreParamsWithSubaccount(...)`: Store with subaccount authentication
-- `getRetrieveParamsWithSubaccount(...)`: Retrieve with subaccount authentication
-- `getDeleteParamsWithSubaccount(...)`: Delete with subaccount authentication
-- `getRevokeSubaccountParams(subaccountToken)`: Revoke subaccount
-- `static createSubaccountUser(seed?)`: Create subaccount user instance
-
-### CryptoUtils
-
-#### Constructor
-```typescript
-constructor(seed?: Uint8Array)
-```
-
-#### Key Management
-- `getPublicKeyHex()`: Get Ed25519 public key as hex
-- `getX25519PublicKeyHex()`: Get X25519 public key as hex
-- `getSecretKeyHex()`: Get Ed25519 secret key as hex
-- `getX25519SecretKeyHex()`: Get X25519 secret key as hex
-
-#### Signing Methods
-- `signStore(namespace, sigTimestamp)`: Sign store operation
-- `signRetrieve(namespace, timestamp)`: Sign retrieve operation
-- `signDelete(messages)`: Sign delete operation
-- `signDeleteAll(namespace, timestamp)`: Sign delete_all operation
-- `signExpireAll(namespace, expiry)`: Sign expire_all operation
-- `signExpireMsgs(messages, expiry, shorten, extend)`: Sign expire_msgs operation
-- `signMessage(message)`: Sign arbitrary message
-- `signMessageX25519(message)`: Sign message for X25519 context
-
-#### Subaccount Methods
-- `generateSubaccountToken(permissions, networkPrefix)`: Generate subaccount token
-- `generateBlindedSubaccountToken(targetPubkey, permissions, networkPrefix)`: Generate blinded subaccount token
-- `signSubaccountToken(subaccountToken)`: Sign subaccount token
-- `signRevokeSubaccount(subaccountToken)`: Sign revoke_subaccount operation
-
-#### Static Methods
-- `generateKeyPair()`: Generate random key pair
-- `fromEd25519KeyPair(publicKey, secretKey)`: Create from Ed25519 key pair
-- `fromX25519KeyPair(publicKey, secretKey)`: Create from X25519 key pair
-- `fromSeed(seed)`: Create from seed
-- `hexToBytes(hexStr)`: Convert hex to bytes
-- `bytesToHex(bytes)`: Convert bytes to hex
-- `stringToBase64(str)`: Convert string to base64
-- `base64ToString(base64Str)`: Convert base64 to string
-- `generateRandomBytes(length)`: Generate random bytes
-
-## Dependencies
+## 🔗 Dependencies
 
 - `@stablelib/ed25519`: Ed25519 cryptographic operations
-- `@stablelib/x25519`: X25519 cryptographic operations
+- `@stablelib/x25519`: X25519 cryptographic operations  
 - `@stablelib/random`: Random number generation
 - `@stablelib/hex`: Hex encoding/decoding
 - `@stablelib/base64`: Base64 encoding/decoding
 - `bs58`: Base58 encoding/decoding
+- `@session.js/mnemonic`: Session-specific utilities
 
-## License
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
 
 This project is part of the Oxen ecosystem. Please refer to the main Oxen repository for licensing information. 

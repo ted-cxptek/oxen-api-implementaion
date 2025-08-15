@@ -17,8 +17,8 @@ const seed = Buffer.from(seedHex, "hex");
 const sessionGenerator = new PostmanParamsGenerator(seed, true);   // Session ID mode
 
 console.log('🔑 Public Key Information:');
-console.log('Session ID Mode (05 prefix):', sessionGenerator.getPublicKeyMainnet());
-console.log('Raw Ed25519 (no prefix):', sessionGenerator.getPublicKeyNoPrefix());
+console.log('Session ID Mode (05 prefix):', sessionGenerator.getX25519SessionId());
+console.log('Raw Ed25519 (00 prefix):', sessionGenerator.getPublicKey());
 console.log('');
 
 // Test Store Parameters
