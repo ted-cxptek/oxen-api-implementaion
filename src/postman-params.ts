@@ -223,12 +223,21 @@ export class PostmanParamsGenerator {
     const timestamp = Date.now();
     const encodedData = this.encodeData(data);
     
-    // For all namespaces except -10, signature is required
+    // Handle different namespace types with appropriate authentication
     let signature: string | undefined;
     
-    if (namespace !== -10) {
-      // Use the specific signStore method from CryptoUtils
-      // Signature format: ("store" || namespace || timestamp)
+    if (namespace === -10) {
+      // Legacy closed groups - no signature for storage
+      // But authentication still needed for retrieval
+      // This maintains backward compatibility with old Session clients
+    } else if (namespace % 10 === 0) {
+      // Public namespaces (0, 10, 20, -10, -20, etc.)
+      // No signature for storage, but needed for retrieval
+      // Examples: namespace 0 (public DMs), namespace 10 (legacy groups)
+    } else {
+      // Private namespaces (1, 2, 3, 7, 11, etc.)
+      // Full authentication required for all operations
+      // Examples: namespace 2-5 (Session config), namespace 7 (private chats)
       signature = this.crypto.signStore(namespace, timestamp);
     }
 
@@ -576,11 +585,21 @@ export class PostmanParamsGenerator {
     const timestamp = Date.now();
     const encodedData = this.encodeData(data);
     
-    // For all namespaces except -10, signature is required
+    // Handle different namespace types with appropriate authentication
     let signature: string | undefined;
     
-    if (namespace !== -10) {
-      // Use the subaccount's Ed25519 key to sign the request
+    if (namespace === -10) {
+      // Legacy closed groups - no signature for storage
+      // But authentication still needed for retrieval
+      // This maintains backward compatibility with old Session clients
+    } else if (namespace % 10 === 0) {
+      // Public namespaces (0, 10, 20, -10, -20, etc.)
+      // No signature for storage, but needed for retrieval
+      // Examples: namespace 0 (public DMs), namespace 10 (legacy groups)
+    } else {
+      // Private namespaces (1, 2, 3, 7, 11, etc.)
+      // Full authentication required for all operations
+      // Examples: namespace 2-5 (Session config), namespace 7 (private chats)
       signature = subaccountCrypto.signStore(namespace, timestamp);
     }
 
